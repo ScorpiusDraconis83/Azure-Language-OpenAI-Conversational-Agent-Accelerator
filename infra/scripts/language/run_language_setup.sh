@@ -9,9 +9,11 @@ cd ${script_dir}
 # Fetch data:
 cp ../../data/*.json .
 
+# Install requirements:
 echo "Installing requirements..."
 python3 -m pip install -r requirements.txt
 
+# Run setup:
 echo "Running CLU setup..."
 python3 clu_setup.py
 echo "Running CQA setup..."

@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.34.44.8038",
-      "templateHash": "12710070694700492341"
+      "version": "0.35.1.17967",
+      "templateHash": "196729111068933069"
     }
   },
   "parameters": {
@@ -71,6 +71,69 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
+      "name": "deploy_managed_identity",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[variables('suffix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.35.1.17967",
+              "templateHash": "3386278368474724985"
+            }
+          },
+          "parameters": {
+            "suffix": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource name suffix."
+              }
+            },
+            "name": {
+              "type": "string",
+              "defaultValue": "[format('id-{0}', parameters('suffix'))]",
+              "metadata": {
+                "description": "Name of Managed Identity resource."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "name": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
       "name": "deploy_storage_account",
       "properties": {
         "expressionEvaluationOptions": {
@@ -88,8 +151,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "1872332378427464512"
+              "version": "0.35.1.17967",
+              "templateHash": "7745946228910384922"
             }
           },
           "parameters": {
@@ -181,7 +244,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "deploy_openai_service",
+      "name": "deploy_search_service",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -190,6 +253,99 @@
         "parameters": {
           "suffix": {
             "value": "[variables('suffix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.35.1.17967",
+              "templateHash": "2757599015930864551"
+            }
+          },
+          "parameters": {
+            "suffix": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource name suffix."
+              }
+            },
+            "name": {
+              "type": "string",
+              "defaultValue": "[format('srch-{0}', parameters('suffix'))]",
+              "metadata": {
+                "description": "Name of AI Search resource."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Search/searchServices",
+              "apiVersion": "2024-06-01-preview",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "disableLocalAuth": false,
+                "semanticSearch": "free",
+                "publicNetworkAccess": "enabled",
+                "networkRuleSet": {
+                  "bypass": "AzureServices",
+                  "ipRules": []
+                },
+                "authOptions": {
+                  "aadOrApiKey": {
+                    "aadAuthFailureMode": "http401WithBearerChallenge"
+                  }
+                }
+              },
+              "sku": {
+                "name": "basic"
+              }
+            }
+          ],
+          "outputs": {
+            "name": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "endpoint": {
+              "type": "string",
+              "value": "[format('https://{0}.search.windows.net', parameters('name'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "deploy_ai_foundry",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[variables('suffix')]"
+          },
+          "managed_identity_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.name.value]"
+          },
+          "search_service_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_search_service'), '2022-09-01').outputs.name.value]"
           },
           "gpt_model_name": {
             "value": "[parameters('gpt_model_name')]"
@@ -216,8 +372,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "7858573958830969320"
+              "version": "0.35.1.17967",
+              "templateHash": "3093109981521093431"
             }
           },
           "parameters": {
@@ -229,9 +385,9 @@
             },
             "name": {
               "type": "string",
-              "defaultValue": "[format('oai-{0}', parameters('suffix'))]",
+              "defaultValue": "[format('aif-{0}', parameters('suffix'))]",
               "metadata": {
-                "description": "Name of OpenAI Service resource."
+                "description": "Name of AI Foundry resource."
               }
             },
             "location": {
@@ -239,6 +395,13 @@
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
                 "description": "Location for all resources."
+              }
+            },
+            "agents_project_name": {
+              "type": "string",
+              "defaultValue": "[format('{0}-agents', parameters('name'))]",
+              "metadata": {
+                "description": "Agents AI Foundry project name."
               }
             },
             "gpt_model_name": {
@@ -287,12 +450,43 @@
                 "Standard",
                 "GlobalStandard"
               ]
+            },
+            "search_service_name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of AI Search resource"
+              }
+            },
+            "managed_identity_name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of managed identity to use for Container Apps."
+              }
             }
+          },
+          "variables": {
+            "language_endpoint_key": "Language"
           },
           "resources": [
             {
+              "type": "Microsoft.CognitiveServices/accounts/projects",
+              "apiVersion": "2025-04-01-preview",
+              "name": "[format('{0}/{1}', parameters('name'), parameters('agents_project_name'))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')))]": {}
+                }
+              },
+              "properties": {},
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
+              ]
+            },
+            {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-04-01-preview",
               "name": "[format('{0}/{1}', parameters('name'), parameters('gpt_model_name'))]",
               "properties": {
                 "model": {
@@ -310,7 +504,7 @@
             },
             {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-04-01-preview",
               "name": "[format('{0}/{1}', parameters('name'), parameters('embedding_model_name'))]",
               "properties": {
                 "model": {
@@ -329,259 +523,15 @@
             },
             {
               "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-04-01-preview",
               "name": "[parameters('name')]",
               "location": "[parameters('location')]",
-              "kind": "OpenAI",
+              "kind": "AIServices",
               "identity": {
                 "type": "SystemAssigned"
               },
               "properties": {
-                "disableLocalAuth": true,
-                "customSubDomainName": "[parameters('name')]",
-                "publicNetworkAccess": "Enabled",
-                "networkAcls": {
-                  "defaultAction": "Allow",
-                  "bypass": "AzureServices"
-                }
-              },
-              "sku": {
-                "name": "S0"
-              }
-            }
-          ],
-          "outputs": {
-            "name": {
-              "type": "string",
-              "value": "[parameters('name')]"
-            },
-            "endpoint": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2024-10-01').endpoint]"
-            },
-            "gpt_deployment_name": {
-              "type": "string",
-              "value": "[parameters('gpt_model_name')]"
-            },
-            "embedding_deployment_name": {
-              "type": "string",
-              "value": "[parameters('embedding_model_name')]"
-            },
-            "embedding_model_name": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('name'), parameters('embedding_model_name')), '2024-10-01').model.name]"
-            },
-            "embedding_model_dimensions": {
-              "type": "int",
-              "value": "[parameters('embedding_model_dimensions')]"
-            }
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
-      "name": "deploy_search_service",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "suffix": {
-            "value": "[variables('suffix')]"
-          },
-          "storage_account_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_storage_account'), '2022-09-01').outputs.name.value]"
-          },
-          "openai_service_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.name.value]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "16283336025318466483"
-            }
-          },
-          "parameters": {
-            "suffix": {
-              "type": "string",
-              "metadata": {
-                "description": "Resource name suffix."
-              }
-            },
-            "name": {
-              "type": "string",
-              "defaultValue": "[format('srch-{0}', parameters('suffix'))]",
-              "metadata": {
-                "description": "Name of AI Search resource."
-              }
-            },
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
-              }
-            },
-            "storage_account_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of Storage Account resource"
-              }
-            },
-            "openai_service_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of OpenAI Service resource."
-              }
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Search/searchServices",
-              "apiVersion": "2024-06-01-preview",
-              "name": "[parameters('name')]",
-              "location": "[parameters('location')]",
-              "identity": {
-                "type": "SystemAssigned"
-              },
-              "properties": {
-                "disableLocalAuth": false,
-                "semanticSearch": "free",
-                "publicNetworkAccess": "enabled",
-                "networkRuleSet": {
-                  "bypass": "AzureServices",
-                  "ipRules": []
-                },
-                "authOptions": {
-                  "aadOrApiKey": {
-                    "aadAuthFailureMode": "http401WithBearerChallenge"
-                  }
-                }
-              },
-              "sku": {
-                "name": "basic"
-              }
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storage_account_name'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_account_name')), resourceId('Microsoft.Search/searchServices', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Search/searchServices', parameters('name')), '2024-06-01-preview', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Search/searchServices', parameters('name'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('openai_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('openai_service_name')), resourceId('Microsoft.Search/searchServices', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Search/searchServices', parameters('name')), '2024-06-01-preview', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Search/searchServices', parameters('name'))]"
-              ]
-            }
-          ],
-          "outputs": {
-            "name": {
-              "type": "string",
-              "value": "[parameters('name')]"
-            },
-            "endpoint": {
-              "type": "string",
-              "value": "[format('https://{0}.search.windows.net', parameters('name'))]"
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_openai_service')]",
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_storage_account')]"
-      ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
-      "name": "deploy_language_service",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "suffix": {
-            "value": "[variables('suffix')]"
-          },
-          "search_service_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_search_service'), '2022-09-01').outputs.name.value]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "6390213759206284697"
-            }
-          },
-          "parameters": {
-            "suffix": {
-              "type": "string",
-              "metadata": {
-                "description": "Resource name suffix."
-              }
-            },
-            "name": {
-              "type": "string",
-              "defaultValue": "[format('lang-{0}', parameters('suffix'))]",
-              "metadata": {
-                "description": "Name of Language Service resource."
-              }
-            },
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
-              }
-            },
-            "search_service_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of AI Search resource"
-              }
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2024-10-01",
-              "name": "[parameters('name')]",
-              "location": "[parameters('location')]",
-              "kind": "TextAnalytics",
-              "identity": {
-                "type": "SystemAssigned"
-              },
-              "properties": {
+                "allowProjectManagement": true,
                 "disableLocalAuth": true,
                 "customSubDomainName": "[parameters('name')]",
                 "publicNetworkAccess": "Enabled",
@@ -594,22 +544,8 @@
                 }
               },
               "sku": {
-                "name": "S"
+                "name": "S0"
               }
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Search/searchServices/{0}', parameters('search_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7'))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2024-10-01', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
-              ]
             }
           ],
           "outputs": {
@@ -617,35 +553,57 @@
               "type": "string",
               "value": "[parameters('name')]"
             },
-            "endpoint": {
+            "agents_project_endpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2024-10-01').endpoint]"
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('name'), parameters('agents_project_name')), '2025-04-01-preview').endpoints['AI Foundry API']]"
+            },
+            "language_endpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2025-04-01-preview').endpoints[variables('language_endpoint_key')]]"
+            },
+            "openai_endpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2025-04-01-preview').endpoints['OpenAI Language Model Instance API']]"
+            },
+            "gpt_deployment_name": {
+              "type": "string",
+              "value": "[parameters('gpt_model_name')]"
+            },
+            "embedding_deployment_name": {
+              "type": "string",
+              "value": "[parameters('embedding_model_name')]"
+            },
+            "embedding_model_name": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('name'), parameters('embedding_model_name')), '2025-04-01-preview').model.name]"
+            },
+            "embedding_model_dimensions": {
+              "type": "int",
+              "value": "[parameters('embedding_model_dimensions')]"
             }
           }
         }
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_search_service')]"
       ]
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "deploy_managed_identity",
+      "name": "create_role_assignments",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
         "mode": "Incremental",
         "parameters": {
-          "suffix": {
-            "value": "[variables('suffix')]"
+          "managed_identity_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.name.value]"
           },
-          "language_service_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_language_service'), '2022-09-01').outputs.name.value]"
-          },
-          "openai_service_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.name.value]"
+          "ai_foundry_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.name.value]"
           },
           "search_service_name": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_search_service'), '2022-09-01').outputs.name.value]"
@@ -660,29 +618,15 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "10207550173647019820"
+              "version": "0.35.1.17967",
+              "templateHash": "9127949922929976192"
             }
           },
           "parameters": {
-            "suffix": {
+            "managed_identity_name": {
               "type": "string",
-              "metadata": {
-                "description": "Resource name suffix."
-              }
-            },
-            "name": {
-              "type": "string",
-              "defaultValue": "[format('id-{0}', parameters('suffix'))]",
               "metadata": {
                 "description": "Name of Managed Identity resource."
-              }
-            },
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Location for all resources."
               }
             },
             "storage_account_name": {
@@ -691,114 +635,131 @@
                 "description": "Name of Storage Account resource."
               }
             },
+            "ai_foundry_name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of AI Foundry resource."
+              }
+            },
             "search_service_name": {
               "type": "string",
               "metadata": {
                 "description": "Name of Search Service resource."
               }
-            },
-            "openai_service_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of OpenAI Service resource."
-              }
-            },
-            "language_service_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of Language Service resource."
-              }
             }
           },
           "resources": [
             {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[parameters('name')]",
-              "location": "[parameters('location')]"
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storage_account_name'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_account_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalType": "ServicePrincipal"
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storage_account_name'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_account_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storage_account_name')), resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalId": "[reference(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), '2023-11-01', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Search/searchServices/{0}', parameters('search_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7'))]",
+              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Search/searchServices/{0}', parameters('search_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0'))]",
+              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('openai_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('openai_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+              "scope": "[format('Microsoft.Search/searchServices/{0}', parameters('search_service_name'))]",
+              "name": "[guid(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), '2025-04-01-preview', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('ai_foundry_name'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('language_service_name'))]",
-              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('language_service_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), resourceId('Microsoft.Authorization/roleDefinitions', 'f07febfe-79bc-46b1-8b37-790e26e6e498'))]",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('ai_foundry_name'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', 'f07febfe-79bc-46b1-8b37-790e26e6e498'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'f07febfe-79bc-46b1-8b37-790e26e6e498')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
-              ]
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('ai_foundry_name'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), resourceId('Microsoft.Authorization/roleDefinitions', 'e47c6f54-e4a2-4754-9501-8e0985b135e1'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managed_identity_name')), '2023-01-31').principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'e47c6f54-e4a2-4754-9501-8e0985b135e1')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('ai_foundry_name'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('ai_foundry_name')), resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Search/searchServices', parameters('search_service_name')), '2023-11-01', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
+                "principalType": "ServicePrincipal"
+              }
             }
           ],
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]"
+              "value": "[parameters('managed_identity_name')]"
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_language_service')]",
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_openai_service')]",
+        "[resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry')]",
+        "[resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_search_service')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_storage_account')]"
       ]
@@ -816,14 +777,17 @@
           "suffix": {
             "value": "[variables('suffix')]"
           },
+          "agents_project_endpoint": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.agents_project_endpoint.value]"
+          },
           "aoai_deployment": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.gpt_deployment_name.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.gpt_deployment_name.value]"
           },
           "aoai_endpoint": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.endpoint.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.openai_endpoint.value]"
           },
           "language_endpoint": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_language_service'), '2022-09-01').outputs.endpoint.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.language_endpoint.value]"
           },
           "managed_identity_name": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.name.value]"
@@ -835,13 +799,13 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_storage_account'), '2022-09-01').outputs.blob_container_name.value]"
           },
           "embedding_deployment_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.embedding_deployment_name.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.embedding_deployment_name.value]"
           },
           "embedding_model_dimensions": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.embedding_model_dimensions.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.embedding_model_dimensions.value]"
           },
           "embedding_model_name": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_openai_service'), '2022-09-01').outputs.embedding_model_name.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.embedding_model_name.value]"
           },
           "storage_account_connection_string": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy_storage_account'), '2022-09-01').outputs.connection_string.value]"
@@ -856,8 +820,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "5285289074414472361"
+              "version": "0.35.1.17967",
+              "templateHash": "185017665825100238"
             }
           },
           "parameters": {
@@ -869,7 +833,7 @@
             },
             "name": {
               "type": "string",
-              "defaultValue": "[format('cg-{0}', parameters('suffix'))]",
+              "defaultValue": "[format('ci-{0}', parameters('suffix'))]",
               "metadata": {
                 "description": "Name of Container Group resource."
               }
@@ -879,12 +843,6 @@
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
                 "description": "Location for all resources."
-              }
-            },
-            "managed_identity_name": {
-              "type": "string",
-              "metadata": {
-                "description": "Name of managed identity to use for Container Apps."
               }
             },
             "language_endpoint": {
@@ -977,6 +935,9 @@
               "type": "string",
               "defaultValue": "conv-assistant-manuals-idx"
             },
+            "agents_project_endpoint": {
+              "type": "string"
+            },
             "router_type": {
               "type": "string",
               "defaultValue": "ORCHESTRATION",
@@ -999,6 +960,12 @@
             "repository": {
               "type": "string",
               "defaultValue": "https://github.com/Azure-Samples/Azure-Language-OpenAI-Conversational-Agent-Accelerator"
+            },
+            "managed_identity_name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of managed identity to use for Container Apps."
+              }
             }
           },
           "resources": [
@@ -1065,6 +1032,10 @@
                         "chmod +x mnt/repo/infra/scripts/run_container_app.sh && bash mnt/repo/infra/scripts/run_container_app.sh"
                       ],
                       "environmentVariables": [
+                        {
+                          "name": "AGENTS_PROJECT_ENDPOINT",
+                          "value": "[parameters('agents_project_endpoint')]"
+                        },
                         {
                           "name": "USE_MI_AUTH",
                           "value": "true"
@@ -1193,9 +1164,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_language_service')]",
+        "[resourceId('Microsoft.Resources/deployments', 'deploy_ai_foundry')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_managed_identity')]",
-        "[resourceId('Microsoft.Resources/deployments', 'deploy_openai_service')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_search_service')]",
         "[resourceId('Microsoft.Resources/deployments', 'deploy_storage_account')]"
       ]

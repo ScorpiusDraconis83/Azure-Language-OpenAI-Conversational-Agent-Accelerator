@@ -2,13 +2,10 @@
 param suffix string
 
 @description('Name of Container Group resource.')
-param name string = 'cg-${suffix}'
+param name string = 'ci-${suffix}'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
-
-@description('Name of managed identity to use for Container Apps.')
-param managed_identity_name string
 
 // Language:
 param language_endpoint string
@@ -39,6 +36,10 @@ param blob_container_name string
 param search_endpoint string
 param search_index_name string = 'conv-assistant-manuals-idx'
 
+// Agents:
+param agents_project_endpoint string
+
+// App:
 @allowed([
   'BYPASS'
   'CLU'
@@ -49,13 +50,18 @@ param search_index_name string = 'conv-assistant-manuals-idx'
 param router_type string = 'ORCHESTRATION'
 param image string = 'mcr.microsoft.com/azure-cli:cbl-mariner2.0'
 param port int = 80
-param repository string = 'https://github.com/Azure-Samples/Azure-Language-OpenAI-Conversational-Agent-Accelerator'
+param repository string = 'https://github.com/Azure-Samples/Azure-Language-OpenAI-Conversational-Agent-Accelerator' // TODO
+
+// Managed Identity:
+@description('Name of managed identity to use for Container Apps.')
+param managed_identity_name string
 
 resource managed_identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: managed_identity_name
 }
 
-resource container_group 'Microsoft.ContainerInstance/containerGroups@2024-10-01-preview' = {
+//----------- Container Instance Resource -----------//
+resource container_instance 'Microsoft.ContainerInstance/containerGroups@2024-10-01-preview' = {
   name: name
   location: location
   identity: {
@@ -116,6 +122,10 @@ resource container_group 'Microsoft.ContainerInstance/containerGroups@2024-10-01
             'chmod +x mnt/repo/infra/scripts/run_container_app.sh && bash mnt/repo/infra/scripts/run_container_app.sh'
           ]
           environmentVariables: [
+            {
+              name: 'AGENTS_PROJECT_ENDPOINT'
+              value: agents_project_endpoint
+            }
             {
               name: 'USE_MI_AUTH'
               value: 'true'
@@ -235,4 +245,5 @@ resource container_group 'Microsoft.ContainerInstance/containerGroups@2024-10-01
   }
 }
 
-output fqdn string = container_group.properties.ipAddress.fqdn
+//----------- Outputs -----------//
+output fqdn string = container_instance.properties.ipAddress.fqdn

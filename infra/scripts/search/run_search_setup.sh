@@ -18,6 +18,7 @@ cp ../../data/${product_info_file} .
 mkdir product_info && mv ${product_info_file} product_info/
 cd product_info && tar -xvzf ${product_info_file} && cd ..
 
+# Upload data to storage account blob container:
 echo "Uploading files to blob container..."
 az storage blob upload-batch \
     --auth-mode login \
@@ -27,9 +28,11 @@ az storage blob upload-batch \
     --pattern "*.md" \
     --overwrite
 
+# Install requirements:
 echo "Installing requirements..."
 python3 -m pip install -r requirements.txt
 
+# Run setup:
 echo "Running index setup..."
 python3 index_setup.py
 

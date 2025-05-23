@@ -1,6 +1,7 @@
 // ========== main.bicep ========== //
 targetScope = 'resourceGroup'
 
+// GPT model:
 @description('Name of GPT model to deploy.')
 @allowed([
   'gpt-4o-mini'
@@ -19,6 +20,7 @@ param gpt_deployment_capacity int
 ])
 param gpt_deployment_type string
 
+// Embedding model:
 @description('Name of Embedding model to deploy.')
 @allowed([
   'text-embedding-ada-002'
@@ -37,9 +39,17 @@ param embedding_deployment_capacity int
 ])
 param embedding_deployment_type string
 
+// Variables:
 var suffix = uniqueString(subscription().id, resourceGroup().id, resourceGroup().location)
 
-// Deploy resources:
+//----------- Deploy App Dependencies -----------//
+module managed_identity 'resources/managed_identity.bicep' = {
+  name: 'deploy_managed_identity'
+  params: {
+    suffix: suffix
+  }
+}
+
 module storage_account 'resources/storage_account.bicep' = {
   name: 'deploy_storage_account'
   params: {
@@ -47,10 +57,19 @@ module storage_account 'resources/storage_account.bicep' = {
   }
 }
 
-module openai_service 'resources/openai_service.bicep' = {
-  name: 'deploy_openai_service'
+module search_service 'resources/search_service.bicep' = {
+  name: 'deploy_search_service'
   params: {
     suffix: suffix
+  }
+}
+
+module ai_foundry 'resources/ai_foundry.bicep' = {
+  name: 'deploy_ai_foundry'
+  params: {
+    suffix: suffix
+    managed_identity_name: managed_identity.outputs.name
+    search_service_name: search_service.outputs.name
     gpt_model_name: gpt_model_name
     gpt_deployment_capacity: gpt_deployment_capacity
     gpt_deployment_type: gpt_deployment_type
@@ -60,51 +79,34 @@ module openai_service 'resources/openai_service.bicep' = {
   }
 }
 
-module search_service 'resources/search_service.bicep' = {
-  name: 'deploy_search_service'
+module role_assignments 'resources/role_assignments.bicep' = {
+  name: 'create_role_assignments'
   params: {
-    suffix: suffix
-    storage_account_name: storage_account.outputs.name
-    openai_service_name: openai_service.outputs.name
-  }
-}
-
-module language_service 'resources/language_service.bicep' = {
-  name: 'deploy_language_service'
-  params: {
-    suffix: suffix
-    search_service_name: search_service.outputs.name
-  }
-}
-
-module managed_identity 'resources/managed_identity.bicep' = {
-  name: 'deploy_managed_identity'
-  params: {
-    suffix: suffix
-    language_service_name: language_service.outputs.name
-    openai_service_name: openai_service.outputs.name
+    managed_identity_name: managed_identity.outputs.name
+    ai_foundry_name: ai_foundry.outputs.name
     search_service_name: search_service.outputs.name
     storage_account_name: storage_account.outputs.name
   }
 }
 
-// Deploy container app:
-module container_group 'resources/container_group.bicep' = {
+//----------- Deploy App -----------//
+module container_instance 'resources/container_instance.bicep' = {
   name: 'deploy_container_group'
   params: {
     suffix: suffix
-    aoai_deployment: openai_service.outputs.gpt_deployment_name
-    aoai_endpoint: openai_service.outputs.endpoint
-    language_endpoint: language_service.outputs.endpoint
+    agents_project_endpoint: ai_foundry.outputs.agents_project_endpoint
+    aoai_deployment: ai_foundry.outputs.gpt_deployment_name
+    aoai_endpoint: ai_foundry.outputs.openai_endpoint
+    language_endpoint: ai_foundry.outputs.language_endpoint
     managed_identity_name: managed_identity.outputs.name
     search_endpoint: search_service.outputs.endpoint
     blob_container_name: storage_account.outputs.blob_container_name
-    embedding_deployment_name: openai_service.outputs.embedding_deployment_name
-    embedding_model_dimensions: openai_service.outputs.embedding_model_dimensions
-    embedding_model_name: openai_service.outputs.embedding_model_name
+    embedding_deployment_name: ai_foundry.outputs.embedding_deployment_name
+    embedding_model_dimensions: ai_foundry.outputs.embedding_model_dimensions
+    embedding_model_name: ai_foundry.outputs.embedding_model_name
     storage_account_connection_string: storage_account.outputs.connection_string
     storage_account_name: storage_account.outputs.name
   }
 }
 
-output WEB_APP_URL string = container_group.outputs.fqdn
+output WEB_APP_URL string = container_instance.outputs.fqdn

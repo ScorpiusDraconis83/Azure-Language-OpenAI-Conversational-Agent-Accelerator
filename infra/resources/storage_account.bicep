@@ -10,6 +10,7 @@ param location string = resourceGroup().location
 @description('Blob container name.')
 param blob_container_name string = 'contoso-outdoors-manuals'
 
+//----------- Storage Account Resource -----------//
 resource storage_account 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: name
   location: location
@@ -39,6 +40,7 @@ resource storage_account 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
+//----------- Outputs -----------//
 output name string = storage_account.name
 output connection_string string = 'ResourceId=${storage_account.id};'
 output blob_container_name string = storage_account::blob_service::blob_container.name

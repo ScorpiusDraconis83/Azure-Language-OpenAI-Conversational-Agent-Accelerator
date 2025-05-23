@@ -28,18 +28,18 @@ node -v
 nvm current
 npm -v
 
-# Setup:
+# Run setup:
 echo "Running setup..."
 bash language/run_language_setup.sh
 bash search/run_search_setup.sh ${STORAGE_ACCOUNT_NAME} ${BLOB_CONTAINER_NAME}
 
-# UI:
+# Build UI:
 echo "Building UI..."
 cd ${frontend_dir}
 npm install
 npm run build
 
-# App:
+# Run app:
 echo "Running app..."
 cd ${backend_dir}
 python3 -m pip install -r requirements.txt
