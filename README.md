@@ -9,12 +9,8 @@ This template is perfect for developers and organizations looking to design, cus
 
 ### MENU: [**FEATURES**](#features) • [**AGENT ARCHITECTURE**](#agent-architecture) • [**GETTING STARTED**](#getting-started) • [**GUIDANCE**](#guidance)
 
-## Important Notice
+**Note:** With any AI solutions you create using these templates, you are responsible for assessing all associated risks, and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
 
-With any AI solutions you create using these templates, you are responsible for assessing all associated risks, and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
-
-
-This template, the application code and configuration it contains, have been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features.
 
 ## Features
 
